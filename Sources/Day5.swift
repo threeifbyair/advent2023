@@ -14,16 +14,6 @@ struct AlmanacMapEntry {
     var numElements: Int
 }
 
-struct SeedRange {
-    var from: Int
-    var numElements: Int
-}
-
-struct SeedMap {
-    var from: SeedMap?
-    var to: SeedRange
-}
-
 class AlmanacMap {
     var entries: [AlmanacMapEntry] = []
     
@@ -31,21 +21,55 @@ class AlmanacMap {
         entries.append(AlmanacMapEntry(from: from, to: to, numElements: numElements))
     }
 
-    func find(_ from: [SeedMap]) -> [SeedMap] {
-        // FINISHME.
+    func findOne(_ at: Int) -> AlmanacMapEntry {
+        var before: AlmanacMapEntry = AlmanacMapEntry(from: 0, to: 0, numElements: 0)
+        var after: AlmanacMapEntry = AlmanacMapEntry(from: Int.max, to: 123456789, numElements: Int.max)
         for entry in entries {
-            if entry.from <= from && from < entry.from + entry.numElements {
-                return entry.to + (from - entry.from)
+            if entry.from <= at && at < entry.from + entry.numElements {
+                return entry
+            }
+            if entry.from > at {
+                if entry.from < after.from {
+                    after = entry
+                }
+            }
+            if entry.from + entry.numElements <= at {
+                if entry.from + entry.numElements > before.from + before.numElements {
+                    before = entry
+                }
             }
         }
-        return from
+        return AlmanacMapEntry(from: before.from + before.numElements, to: before.from + before.numElements, numElements: after.from - (before.from + before.numElements))
+    }
+
+
+    func find(_ at: [AlmanacMapEntry]) -> [AlmanacMapEntry] {
+        var answer: [AlmanacMapEntry] = []
+        //print("Finding \(at)")
+        for cur in at {
+            var cur = cur
+            //print(" Finding \(cur)")
+            while cur.numElements > 0 {
+                let entry = findOne(cur.to)
+                //print(" Found \(entry)")
+                let offset = cur.to - entry.from
+                let numElements = min(entry.numElements - offset, cur.numElements)
+                answer.append(AlmanacMapEntry(from: cur.to, to: entry.to + offset, numElements: numElements))
+                cur.from += numElements
+                cur.numElements -= numElements
+                cur.to += numElements
+                //print(" Cur is now \(cur)")
+            }
+        }
+        //print("Answer is \(answer)")
+        return answer
     }
 }
 
 class Day5: AdventDay {
     override func run() {
         var answer: Int = 0
-        var seeds: Set<SeedRange> = Set([])
+        var seeds: [AlmanacMapEntry] = []
         var maps: [Almanac: AlmanacMap] = [:]
         var curMap: Almanac? = nil
         for str in inputStrings {
@@ -62,14 +86,14 @@ class Day5: AdventDay {
                             curSeed = Int(seed)!
                         }
                         else {
-                            seeds.insert(SeedRange(from: curSeed!, numElements: Int(seed)!))
+                            seeds.append(AlmanacMapEntry(from: curSeed!, to: curSeed!, numElements: Int(seed)!))
                             curSeed = nil
                         }
                     }
                 }
                 else {
                     for seed in split {
-                        seeds.insert(SeedRange(from: Int(seed)!, numElements: 1))
+                        seeds.append(AlmanacMapEntry(from: Int(seed)!, to: Int(seed)!, numElements: 1))
                     }
                 }
             }
@@ -92,7 +116,7 @@ class Day5: AdventDay {
             }
         }
         // Now we have all the maps. Time to run the seeds through them.
-        answer = 999999999
+        answer = Int.max
         for seed in seeds {
             let soil = maps[.seedToSoil]!.find([seed])
             let fertilizer = maps[.soilToFertilizer]!.find(soil)
@@ -103,9 +127,10 @@ class Day5: AdventDay {
             let location = maps[.humidityToLocation]!.find(humidity)
 
             //print("Seed \(seed) -> soil \(soil) -> fertilizer \(fertilizer) -> water \(water) -> light \(light) -> temperature \(temperature) -> humidity \(humidity) -> location \(location)")
-            
-            if location < answer {
-                answer = location
+            for loc in location {
+                if loc.to < answer {
+                    answer = loc.to
+                }
             }
         }
         print("Answer is \(answer)")
