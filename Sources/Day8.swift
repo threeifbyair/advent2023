@@ -1,6 +1,23 @@
 import Foundation
 import RegexBuilder
 
+func gcd(_ x: Int, _ y: Int) -> Int {
+    var a = 0
+    var b = max(x, y)
+    var r = min(x, y)
+    
+    while r != 0 {
+        a = b
+        b = r
+        r = a % b
+    }
+    return b
+}
+
+func lcm(_ x: Int, _ y: Int) -> Int {
+    return x / gcd(x, y) * y
+}
+
 class Day8: AdventDay {
     override func run() {
         var answer: Int = 0
@@ -37,28 +54,49 @@ class Day8: AdventDay {
             }
         }
         if partTwo {
-            var ghostLocations: [Substring] = Array(map.filter({$0.0.hasSuffix("A")}).keys)
-            var stringOffset = directions!.startIndex
-            while ghostLocations.filter({$0.hasSuffix("Z")}).count != ghostLocations.count {
-                var newGhostLocations: [Substring] = []
-                let thisDirection = directions![stringOffset]
-                for loc in ghostLocations {
-                    if thisDirection == "R" {
-                        newGhostLocations.append(map[loc]!.1)
+            let ghostLocations: [Substring] = Array(map.filter({$0.0.hasSuffix("A")}).keys)
+            var ghostMaps: [(Int, Int, [Int])] = []
+            for loc in ghostLocations {
+                var currentLoc = loc
+                var turnId = 0
+                var finalTurns: [Int] = []
+                var beenThere: [Substring: [String.Index: Int]] = [:]
+                var stringOffset = directions!.startIndex
+                while !beenThere.contains(where: {$0.0 == currentLoc && $0.1.contains(where: {$0.0 == stringOffset})}) {
+                    if beenThere[currentLoc] == nil {
+                        beenThere[currentLoc] = [:]
                     }
-                    else if thisDirection == "L" {
-                        newGhostLocations.append(map[loc]!.0)
+                    beenThere[currentLoc]![stringOffset] = turnId
+                    if currentLoc.hasSuffix("Z") {
+                        finalTurns.append(turnId)
+                    }
+                    if directions![stringOffset] == "R" {
+                        currentLoc = map[currentLoc]!.1
+                    }
+                    else if directions![stringOffset] == "L" {
+                        currentLoc = map[currentLoc]!.0
                     }
                     else {
-                        print("HELP! direction is \(thisDirection)!")
+                        print("HELP! direction is \(directions![stringOffset])!")
                     }
+                    stringOffset = directions!.index(after: stringOffset)
+                    if stringOffset == directions!.endIndex {
+                        stringOffset = directions!.startIndex
+                    }
+                    turnId += 1
                 }
-                ghostLocations = newGhostLocations
-                stringOffset = directions!.index(after: stringOffset)
-                if stringOffset == directions!.endIndex {
-                    stringOffset = directions!.startIndex
-                }
-                answer += 1
+                ghostMaps.append((turnId, beenThere[currentLoc]![stringOffset]!, finalTurns))
+                print("Ghost repeated at turn \(turnId) back to \(beenThere[currentLoc]![stringOffset]!) and found endpoints at \(finalTurns)")
+                //guard finalTurns.count == 1 && turnId - finalTurns[0] == beenThere[currentLoc]![stringOffset]! else {
+                //    print("HELP! \(finalTurns.count) endpoints or complex restart!")
+                //    return
+                //}
+            }
+            // Now we have a list of all the ghosts and their turn counts.
+            // As it happens, we can just do a least common multiple of all the turn counts.
+            answer = ghostMaps[0].2[0]
+            for ghost in ghostMaps {
+                answer = lcm(answer, ghost.2[0])
             }
         }
         else {
