@@ -4,19 +4,28 @@ enum HotSpring: String {
     case unknown = "?"
 }
 
-func matchNonogram(springLine: [HotSpring], nonogramLine: [Int], lastSpring: HotSpring, currentSpring: HotSpring?, currentCount: Int) -> [[HotSpring]]? {
-    if nonogramLine.count == 0 && currentCount == 0 && springLine.count == 0 {
-        // We've reached the end so we know this works one way.
-        return [[]]
+class AdventLine {
+    var springLine: [HotSpring]
+    var nonogramLine: [Int]
+
+    init(springLine: [HotSpring], nonogramLine: [Int]) {
+        self.springLine = springLine
+        self.nonogramLine = nonogramLine
     }
-    if springLine.count == 0 {
-        // We've reached the end of the springs but not the nonogram, so this can't fit.
-        return nil
-    }
-    switch (lastSpring, currentSpring ?? springLine[0]) {
+    
+    func matchNonogram(springOffset: Int, nonogramOffset: Int, lastSpring: HotSpring, currentSpring: HotSpring?, currentCount: Int) -> [[HotSpring]]? {
+        if nonogramOffset == nonogramLine.count && currentCount == 0 && springOffset == springLine.count {
+            // We've reached the end so we know this works one way.
+            return [[]]
+        }
+        if springOffset == springLine.count {
+            // We've reached the end of the springs but not the nonogram, so this can't fit.
+            return nil
+        }
+        switch (lastSpring, currentSpring ?? springLine[springOffset]) {
         case (.operational, .operational):
             // OK, keep going.
-            let innerMatch = matchNonogram(springLine: Array(springLine[1...]), nonogramLine: nonogramLine, lastSpring: .operational, currentSpring: nil, currentCount: 0)
+            let innerMatch = matchNonogram(springOffset: springOffset + 1, nonogramOffset: nonogramOffset, lastSpring: .operational, currentSpring: nil, currentCount: 0)
             if innerMatch != nil {
                 return innerMatch!.map { [.operational] + $0 }
             }
@@ -25,11 +34,11 @@ func matchNonogram(springLine: [HotSpring], nonogramLine: [Int], lastSpring: Hot
             }
         case (.operational, .damaged):
             // Time to consume a nonogram count.
-            if nonogramLine.count == 0 {
+            if nonogramOffset == nonogramLine.count {
                 // We're out of nonogram counts, so this can't fit.
                 return nil
             }
-            let innerMatch =  matchNonogram(springLine: Array(springLine[1...]), nonogramLine: Array(nonogramLine[1...]), lastSpring: .damaged, currentSpring: nil, currentCount: nonogramLine[0] - 1)
+            let innerMatch =  matchNonogram(springOffset: springOffset + 1, nonogramOffset: nonogramOffset + 1, lastSpring: .damaged, currentSpring: nil, currentCount: nonogramLine[nonogramOffset] - 1)
             if innerMatch != nil {
                 return innerMatch!.map { [.damaged] + $0 }
             }
@@ -43,7 +52,7 @@ func matchNonogram(springLine: [HotSpring], nonogramLine: [Int], lastSpring: Hot
             }
             else {
                 // OK, keep going.
-                let innerMatch = matchNonogram(springLine: Array(springLine[1...]), nonogramLine: nonogramLine, lastSpring: .operational, currentSpring: nil, currentCount: 0)
+                let innerMatch = matchNonogram(springOffset: springOffset + 1, nonogramOffset: nonogramOffset, lastSpring: .operational, currentSpring: nil, currentCount: 0)
                 if innerMatch != nil {
                     return innerMatch!.map { [.operational] + $0 }
                 }
@@ -58,7 +67,7 @@ func matchNonogram(springLine: [HotSpring], nonogramLine: [Int], lastSpring: Hot
             }
             else {
                 // OK, keep going.
-                let innerMatch = matchNonogram(springLine: Array(springLine[1...]), nonogramLine: nonogramLine, lastSpring: .damaged, currentSpring: nil, currentCount: currentCount - 1)
+                let innerMatch = matchNonogram(springOffset: springOffset + 1, nonogramOffset: nonogramOffset, lastSpring: .damaged, currentSpring: nil, currentCount: currentCount - 1)
                 if innerMatch != nil {
                     return innerMatch!.map { [.damaged] + $0 }
                 }
@@ -68,8 +77,8 @@ func matchNonogram(springLine: [HotSpring], nonogramLine: [Int], lastSpring: Hot
             }
         case (_, .unknown):
             // We don't know what this is, so we have to try both.
-            let innerMatchOperational =  matchNonogram(springLine: springLine, nonogramLine: nonogramLine, lastSpring: lastSpring, currentSpring: .operational, currentCount: currentCount)
-            let innerMatchDamaged = matchNonogram(springLine: springLine, nonogramLine: nonogramLine, lastSpring: lastSpring, currentSpring: .damaged, currentCount: currentCount)
+            let innerMatchOperational =  matchNonogram(springOffset: springOffset, nonogramOffset: nonogramOffset, lastSpring: lastSpring, currentSpring: .operational, currentCount: currentCount)
+            let innerMatchDamaged = matchNonogram(springOffset: springOffset, nonogramOffset: nonogramOffset, lastSpring: lastSpring, currentSpring: .damaged, currentCount: currentCount)
             if innerMatchOperational != nil && innerMatchDamaged != nil {
                 return innerMatchOperational! + innerMatchDamaged!
             }
@@ -85,10 +94,18 @@ func matchNonogram(springLine: [HotSpring], nonogramLine: [Int], lastSpring: Hot
         default:
             // This is a bad state.
             return nil
+        }
     }
+
+    func getAnswer() -> [[HotSpring]]? {
+        return matchNonogram(springOffset: 0, nonogramOffset: 0, lastSpring: .operational, currentSpring: nil, currentCount: 0)
+    }
+       
 }
 
+
 class Day12: AdventDay {
+
     override func run() {
         var answer: Int = 0
         for str in inputStrings {
@@ -114,7 +131,8 @@ class Day12: AdventDay {
             // OK, now we have a map of the springs and a nonogram.
             // How many ways can the map match the nonogram?
             print("Matching springs \(springLineStr) to nonogram \(nonogramLine)")
-            let thisAnswer = matchNonogram(springLine: springLine, nonogramLine: nonogramLine, lastSpring: .operational, currentSpring: nil, currentCount: 0)
+            let thisLine = AdventLine(springLine: springLine, nonogramLine: nonogramLine)
+            let thisAnswer = thisLine.getAnswer()
             //for answer in thisAnswer ?? [] {
             //    print("                ", answer.map { $0.rawValue }.joined())
             //}
