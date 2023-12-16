@@ -106,15 +106,20 @@ class Day12: AdventDay {
             for part in nonogramLineStr.split(separator: ",") {
                 nonogramLine.append(Int(part)!)
             }
+            if partTwo {
+                // We need to quintuple both lines.
+                springLine = springLine + [.unknown] + springLine + [.unknown] + springLine + [.unknown] + springLine + [.unknown] + springLine
+                nonogramLine = nonogramLine + nonogramLine + nonogramLine + nonogramLine + nonogramLine
+            }
             // OK, now we have a map of the springs and a nonogram.
             // How many ways can the map match the nonogram?
-            //print("Matching springs \(springLineStr) to nonogram \(nonogramLine)")
+            print("Matching springs \(springLineStr) to nonogram \(nonogramLine)")
             let thisAnswer = matchNonogram(springLine: springLine, nonogramLine: nonogramLine, lastSpring: .operational, currentSpring: nil, currentCount: 0)
             //for answer in thisAnswer ?? [] {
             //    print("                ", answer.map { $0.rawValue }.joined())
             //}
 
-            //print("Result is \(thisAnswer?.count ?? 0)")
+            print("Result is \(thisAnswer?.count ?? 0)")
             
             answer += thisAnswer?.count ?? 0
         }   
