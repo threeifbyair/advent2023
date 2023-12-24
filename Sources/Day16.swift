@@ -6,11 +6,11 @@ enum MirrorEntry: String, Hashable {
     case horizSplit = "-"
 }
 
-enum Direction {
-    case north
-    case south
-    case east
-    case west
+enum Direction: Int, Hashable {
+    case north = 0
+    case south = 1
+    case east = 2
+    case west = 3
 }
 
 class Mirror {
