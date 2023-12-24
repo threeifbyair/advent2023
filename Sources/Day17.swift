@@ -51,37 +51,49 @@ class LossMap {
     var lossMap: [[Int]]
     var partialAnswers: [PartialLossAnswer: Int] = [:]
     var partialSearches: Heap<PartialLossHeapEntry> = Heap<PartialLossHeapEntry>()
+    var minSteps: Int
+    var maxSteps: Int
 
-    init(input: [[Int]]) {
+    init(input: [[Int]], minSteps: Int = 0, maxSteps: Int = 3) {
         lossMap = input
+        self.minSteps = minSteps
+        self.maxSteps = maxSteps
     }
 
-    func getCachedAnswer(key: PartialLossAnswer) -> Int? {
-        /*
-        var answer = partialAnswers[key]
-        let newKey = PartialLossAnswer(x: key.x, y: key.y, direction: key.direction, steps: key.steps) 
-        while newKey.steps < 3 {
-            newKey.steps += 1
-            if let nextAnswer = partialAnswers[newKey]
-            {
-                answer = min(answer ?? Int.max, nextAnswer)
+    func getCachedAnswer(key: PartialLossAnswer, moreSteps: Bool = false) -> Int? {
+        if moreSteps {
+            let newKey = PartialLossAnswer(x: key.x, y: key.y, direction: key.direction, steps: key.steps)
+            var answer = partialAnswers[key]
+            while newKey.steps < maxSteps {
+                newKey.steps += 1
+                if let nextAnswer = partialAnswers[newKey]
+                {
+                    answer = min(answer ?? Int.max, nextAnswer)
+                }
             }
+            return answer
         }
-        return answer
-         */
-        return partialAnswers[key]
+        else {
+            return partialAnswers[key]
+        }
     }
 
-    func registerPartialAnswer(_ key: PartialLossAnswer, _ cost: Int, _ depth: Int, verbose: Bool = false) {
+    func registerPartialAnswer(key: PartialLossAnswer, cost: Int, depth: Int, oldDirection: Direction, oldSteps: Int, verbose: Bool = false) {
         if key.y < 0 || key.y >= lossMap.count || key.x < 0 || key.x >= lossMap[key.y].count {
             if verbose {
                 print(String(repeating: "*", count: depth),  "Not searching \(key.direction) to \(key.x),\(key.y) with \(key.steps) steps: off the map")
             }
             return
         }
-        if key.steps >= 3 {
+        if key.steps >= maxSteps {
             if verbose {
                 print(String(repeating: "*", count: depth), "Not searching \(key.direction) to \(key.x),\(key.y) with \(key.steps) steps: too many steps")
+            }
+            return
+        }
+        if key.direction != oldDirection && oldSteps < minSteps {
+            if verbose {
+                print(String(repeating: "*", count: depth), "Not searching \(key.direction) to \(key.x),\(key.y) with \(key.steps) steps: too soon to turn")
             }
             return
         }
@@ -109,7 +121,7 @@ class LossMap {
             }
             return
         }
-        if key.steps >= 3 {
+        if key.steps >= maxSteps {
             if verbose {
                 print(String(repeating: "-", count: depth+1), "\(key.x),\(key.y) \(key.direction) with \(key.steps) steps: too many steps")
             }
@@ -137,25 +149,25 @@ class LossMap {
             if verbose {
                 print(String(repeating: "*", count: depth+1), "\(key.x),\(key.y) \(key.direction) with \(key.steps) steps: searching north")
             }
-            registerPartialAnswer(PartialLossAnswer(x: key.x, y: key.y-1, direction: .north, steps: (key.direction == .north ? key.steps+1 : 0)), newCost, depth+1, verbose: verbose)
+            registerPartialAnswer(key: PartialLossAnswer(x: key.x, y: key.y-1, direction: .north, steps: (key.direction == .north ? key.steps+1 : 0)), cost: newCost, depth: depth+1, oldDirection: key.direction, oldSteps: key.steps, verbose: verbose)
         }
         if key.direction != .north {
             if verbose {
                 print(String(repeating: "*", count: depth+1), "\(key.x),\(key.y) \(key.direction) with \(key.steps) steps: searching south")
             }
-            registerPartialAnswer(PartialLossAnswer(x: key.x, y: key.y+1, direction: .south, steps: (key.direction == .south ? key.steps+1 : 0)), newCost, depth+1, verbose: verbose)
+            registerPartialAnswer(key: PartialLossAnswer(x: key.x, y: key.y+1, direction: .south, steps: (key.direction == .south ? key.steps+1 : 0)), cost: newCost, depth: depth+1, oldDirection: key.direction, oldSteps: key.steps, verbose: verbose)
         }
         if key.direction != .east {
             if verbose {
                 print(String(repeating: "*", count: depth+1), "\(key.x),\(key.y) \(key.direction) with \(key.steps) steps: searching west")
             }
-            registerPartialAnswer(PartialLossAnswer(x: key.x-1, y: key.y, direction: .west, steps: (key.direction == .west ? key.steps+1 : 0)), newCost, depth+1, verbose: verbose)
+            registerPartialAnswer(key: PartialLossAnswer(x: key.x-1, y: key.y, direction: .west, steps: (key.direction == .west ? key.steps+1 : 0)), cost: newCost, depth: depth+1, oldDirection: key.direction, oldSteps: key.steps, verbose: verbose)
         }
         if key.direction != .west {
             if verbose {
                 print(String(repeating: "*", count: depth+1), "\(key.x),\(key.y) \(key.direction) with \(key.steps) steps: searching east")
             }
-            registerPartialAnswer(PartialLossAnswer(x: key.x+1, y: key.y, direction: .east, steps: (key.direction == .east ? key.steps+1 : 0)), newCost, depth+1, verbose: verbose)
+            registerPartialAnswer(key: PartialLossAnswer(x: key.x+1, y: key.y, direction: .east, steps: (key.direction == .east ? key.steps+1 : 0)), cost: newCost, depth: depth+1, oldDirection: key.direction, oldSteps: key.steps, verbose: verbose)
         }
         if verbose {
             print(String(repeating: "-", count: depth+1), "\(key.x),\(key.y) \(key.direction) with \(key.steps) steps: done")
@@ -166,10 +178,11 @@ class LossMap {
         let key = PartialLossAnswer(x: x, y: y, direction: direction, steps: steps)
         if let answer = getCachedAnswer(key: key) {
             if answer <= previousCost {
+                print("Cached cost \(answer) is better than \(previousCost)")
                 return
             }
         }
-        registerPartialAnswer(key, previousCost, 0, verbose: verbose)
+        registerPartialAnswer(key: key, cost: previousCost, depth: 0, oldDirection: direction, oldSteps: minSteps, verbose: verbose)
         while let entry = partialSearches.popMin()
         {
             // Get as far along the search as we can.
@@ -187,8 +200,8 @@ class LossMap {
     func getBestCost() -> Int? {
         searchPartialCost(x: 0, y: 0, direction: .south, steps: 0, previousCost: -lossMap[0][0], verbose: false)
         searchPartialCost(x: 0, y: 0, direction: .east, steps: 0, previousCost: -lossMap[0][0], verbose: false)
-        let try1 = getCachedAnswer(key: PartialLossAnswer(x: lossMap[0].count - 1, y: lossMap.count - 1, direction: .south, steps: 0))
-        let try2 = getCachedAnswer(key: PartialLossAnswer(x: lossMap[0].count - 1, y: lossMap.count - 1, direction: .east, steps: 0))
+        let try1 = getCachedAnswer(key: PartialLossAnswer(x: lossMap[0].count - 1, y: lossMap.count - 1, direction: .south, steps: minSteps), moreSteps: true)
+        let try2 = getCachedAnswer(key: PartialLossAnswer(x: lossMap[0].count - 1, y: lossMap.count - 1, direction: .east, steps: minSteps), moreSteps: true)
         let adjustment = lossMap[lossMap.count-1][lossMap[0].count-1] /* - lossMap[0][0]*/
         if let try1 = try1, let try2 = try2 {
             return min(try1, try2) + adjustment
@@ -222,17 +235,12 @@ class Day17: AdventDay {
             }
             lossMap.append(lossLine)
         }
-        if partTwo {
-            // We don't know yet!
-        }
-        else {
-            // Build the best route from the end to the beginning.
-            let thisMap = LossMap(input: lossMap)
-            let thisAnswer = thisMap.getBestCost()
-            //print("Result is \(thisAnswer)")
-            
-            answer = thisAnswer!
-        }   
+        // Build the best route from the end to the beginning.
+        let thisMap = LossMap(input: lossMap, minSteps: partTwo ? 3 : 0, maxSteps: partTwo ? 10 : 3)
+        let thisAnswer = thisMap.getBestCost()
+        //print("Result is \(thisAnswer)")
+        
+        answer = thisAnswer!
 
         print("Answer is \(answer)")
     }
