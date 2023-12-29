@@ -6,6 +6,9 @@ struct Advent2023: ParsableCommand {
     @Flag(name: [.long, .customShort("p")], help: "Perform part two of the challenge")
     var partTwo = false
 
+    @Flag(name: [.long, .customShort("v")], help: "Give verbose results")
+    var verbose = false
+
     @Option(name: [.long, .customShort("i")], help: "The file to read input from")
     var inputFile: String? = nil
 
@@ -37,7 +40,7 @@ struct Advent2023: ParsableCommand {
             print("No such day \(dayClass)")
             return
         }
-        let dayInstance = dayClassType.init(partTwo: partTwo, inputStrings: inputArray, argint: argint)
+        let dayInstance = dayClassType.init(partTwo: partTwo, inputStrings: inputArray, argint: argint, verbose: verbose)
         dayInstance.run()
     }
 }
