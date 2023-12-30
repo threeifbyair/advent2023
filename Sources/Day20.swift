@@ -226,9 +226,6 @@ class PulsarNetwork {
 
 }
 
-
-
-
 class Day20: AdventDay {
 
     override func run() {
@@ -317,8 +314,13 @@ class Day20: AdventDay {
                 }
             }
 
-            //print("Seen repeats: \(seenRepeat)")
+            // Sad to say, the brute force method below takes too long. All we need to do is
+            // LCM the repeat counts and that's the answer.
+            answer = influencePulsars.keys.map({ (seenRepeat[$0] ?? [(0,0,0)])[0].2 }).reduce(1, { lcm($0, $1) })
 
+
+            
+            /*
             let influenceHistory = influencePulsars.map({ ($0.key, network.pulsars[$0.key]!.compressHistory().sorted(by: { $0.key < $1.key })) })
             //print("History: \(influenceHistory)")
             
@@ -416,15 +418,16 @@ class Day20: AdventDay {
                 }
             }
             answer = Int(lateNetwork.pushCount)
+            */
         }
         else {
             let buttonPresses = argint ?? 1000
             
-            for i in 0 ..< buttonPresses {
-                print("Button press \(i)")
-                network.pressButton(verbose: true)
+            for _ in 0 ..< buttonPresses {
+                //print("Button press \(i)")
+                network.pressButton(verbose: verbose)
             }
-            print("Low pulses: \(network.pulseCount[0]), high pulses: \(network.pulseCount[1])")
+            //print("Low pulses: \(network.pulseCount[0]), high pulses: \(network.pulseCount[1])")
 
             answer = network.pulseCount[1] * network.pulseCount[0]
         }
