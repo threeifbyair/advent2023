@@ -1,18 +1,8 @@
 (* main.ml for Advent of Code 2023 *)
 
-let read_whole_chan chan =
-  let lines = ref [] in
-  let rec loop () =
-    let line = input_line chan in
-      lines := line :: !lines;
-      loop ()
-  in
-    try loop () with
-      End_of_file -> List.rev !lines
-
-let read_whole_file filename =
-  let chan = match filename with | "" | "-" -> Stdlib.stdin | _ -> open_in filename in
-    read_whole_chan chan
+let read_whole_file (filename: string) : string list =
+  let chan = match filename with | "" | "-" -> Stdlib.stdin | _ -> In_channel.open_text filename in 
+    In_channel.input_lines chan
 
 let part_two = ref false
 let verbose = ref false
@@ -33,6 +23,7 @@ let speclist = [
 
 let pick_fn day = match day with
   | 1 -> Advent2023.Day1.day1 
+  | 2 -> Advent2023.Day2.day2 
   | _ -> failwith "Unknown day!"
 
 let do_day lines day = (pick_fn day) lines !part_two !verbose !cmdline_arg
