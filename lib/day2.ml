@@ -2,7 +2,7 @@ type rgb = { red: int; green: int; blue: int }
 
 
 
-let rec process_subgame verbose part_two gameid maxrgb l = 
+let rec process_subgame verbose gameid maxrgb l = 
   let re = Str.regexp {|\([0-9]+\)+ \([a-z]+\)|} in 
     let check_rgb num color maxrgb = 
       if verbose then Printf.printf "Processing %d %s\n" num color; 
@@ -17,26 +17,48 @@ let rec process_subgame verbose part_two gameid maxrgb l =
         | cmd :: ll -> if Str.string_match re cmd 0 then
                         let num = Str.matched_group 1 cmd in
                           let color = Str.matched_group 2 cmd in 
-          (check_rgb (int_of_string num) color maxrgb) * (process_subgame verbose part_two gameid maxrgb ll)
+          (check_rgb (int_of_string num) color maxrgb) * (process_subgame verbose gameid maxrgb ll)
         else failwith "Not a color!"
 
+let rec process_subgame_part2 verbose rgb l = 
+  let re = Str.regexp {|\([0-9]+\)+ \([a-z]+\)|} in 
+    let check_rgb num color rgb = 
+      if verbose then Printf.printf "Processing %d %s\n" num color; 
+      match color with 
+      | "red" -> if num <= rgb.red then rgb else {rgb with red = num}
+      | "green" -> if num <= rgb.green then rgb else {rgb with green = num}
+      | "blue" -> if num <= rgb.blue then rgb else {rgb with blue = num}
+      | _ -> failwith "Unknown color!"
+    in
+        match l with 
+        | [] -> rgb
+        | cmd :: ll -> if Str.string_match re cmd 0 then
+                        let num = Str.matched_group 1 cmd in
+                          let color = Str.matched_group 2 cmd in 
+                            process_subgame_part2 verbose (check_rgb (int_of_string num) color rgb) ll
+                        else failwith "Not a color!"
 
-
-
-
-
-let rec find_subgame verbose part_two gameid maxrgb l = 
+let rec find_subgame verbose gameid rgb l = 
     match l with
     | [] -> gameid
-    | game :: ll -> if verbose then Printf.printf("Game %d: %s\n") gameid game; (process_subgame verbose part_two gameid maxrgb (Str.split (Str.regexp ", ") game)) * find_subgame verbose part_two gameid maxrgb ll 
+    | game :: ll -> (process_subgame verbose gameid rgb (Str.split (Str.regexp ", ") game)) * find_subgame verbose gameid rgb ll 
+
+
+let rec find_subgame_part2 verbose rgb l = 
+  match l with
+  | [] -> rgb.red * rgb.green * rgb.blue
+  | game :: ll -> find_subgame_part2 verbose (process_subgame_part2 verbose rgb (Str.split (Str.regexp ", ") game))  ll 
+
 
 let process_game part_two verbose line =
   let re = Str.regexp {|^Game \([0-9]+\): \(.+\)$|} in 
     if Str.string_match re line 0 then 
       let gameid = int_of_string (Str.matched_group 1 line) in 
         let gamestr = Str.matched_group 2 line in 
-          let games = Str.split (Str.regexp "; ") gamestr in 
-            find_subgame verbose part_two gameid {red = 12; green = 13; blue = 14} games  
+          let games = Str.split (Str.regexp "; ") gamestr in
+            if verbose then Printf.printf "Game %d: %s\n" gameid gamestr;
+            if part_two then find_subgame_part2 verbose {red = 0; green = 0; blue = 0} games else
+            find_subgame verbose gameid {red = 12; green = 13; blue = 14} games  
     else failwith "Not a game!"
 
 
