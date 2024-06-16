@@ -5,10 +5,11 @@ import sys
 import argparse
 import os
 
-import day1
+import day1, day2
 
 daylist = {
     1: day1.Day1,
+    2: day2.Day2,
 }
 
 def main(args):
