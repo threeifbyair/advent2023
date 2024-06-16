@@ -19,3 +19,5 @@ Cargo.lock
 *.cmx
 *.cmi
 _build
+
+__pycache__/
