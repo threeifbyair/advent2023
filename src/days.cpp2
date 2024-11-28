@@ -1,0 +1,25 @@
+export module Days;
+import Advent2023;
+import Day1;
+
+Days: namespace = {
+    bad_day: type = {
+        this: Advent2023::day;
+        operator= : (out this, lines, part_two, verbose, argint) = {
+            Advent2023::day = (lines, part_two, verbose, argint);
+        }
+        run : (override this) -> int = {
+            std::cout << "So you've had a bad day...";
+            return -1;
+        }
+    }
+
+    export make_day : (day: int, lines: std::vector<std::string>, part_two: bool, verbose: bool, argint: int) -> std::unique_ptr<Advent2023::day> = {
+        return inspect day -> std::unique_ptr<Advent2023::day> {
+            is 1 = unique.new<Day1::day>(lines, part_two, verbose, argint);
+
+
+            is _ = unique.new<bad_day>(lines, part_two, verbose, argint);
+        };
+    }
+}
