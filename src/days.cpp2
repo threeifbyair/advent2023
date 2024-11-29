@@ -1,6 +1,7 @@
 export module Days;
 import Advent2023;
 import Day1;
+import Day2;
 
 Days: namespace = {
     bad_day: type = {
@@ -17,6 +18,7 @@ Days: namespace = {
     export make_day : (day: int, lines: std::vector<std::string>, part_two: bool, verbose: bool, argint: int) -> std::unique_ptr<Advent2023::day> = {
         return inspect day -> std::unique_ptr<Advent2023::day> {
             is 1 = unique.new<Day1::day>(lines, part_two, verbose, argint);
+            is 2 = unique.new<Day2::day>(lines, part_two, verbose, argint);
 
 
             is _ = unique.new<bad_day>(lines, part_two, verbose, argint);
