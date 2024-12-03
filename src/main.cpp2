@@ -41,13 +41,6 @@ main : (args) -> int = {
       return 1;
    }
 
-   //if (day == 0 || day > Days.max_day) {
-   //   std::cerr << "Invalid day (day)$!" << std::endl;
-   //   return 1;
-   //}
-
-   std::cout << "Verbosity level was set to (verbose)$; part two to (part_two)$.\n";
-
    infd := std::ifstream(infile);
    lines : std::vector<std::string>;
    if (!infd.is_open()) {

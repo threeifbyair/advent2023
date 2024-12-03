@@ -1,0 +1,127 @@
+export module Day3;
+import Advent2023;
+
+Day3: namespace = {
+    export day : type = {
+        this: Advent2023::day;
+
+        operator= : (out this,  lines, part_two, verbose, argint) = {
+            Advent2023::day = (lines, part_two, verbose, argint);
+        }
+
+        is_symbol: (ch: char) -> bool = {
+            if '0' <= ch <= '9' {
+                return false;
+            }
+            return ch != '.';
+        }
+
+        find_number: (this, x:int, y:int) -> std::optional<int> = {
+            lx := x;
+            if !('0' <= m_lines[y][lx] <= '9') {
+                return std::nullopt;
+            }
+            // Now scan back until we find a non-number.
+            while '0' <= m_lines[y][lx] <= '9' {
+                lx--;
+            }
+            lx++;
+            result : int = 0;
+            while '0' <= m_lines[y][lx] <= '9' {
+                result = result * 10 + (m_lines[y][lx] - '0');
+                lx++;
+            }
+            return result;
+        }
+
+        run : (override inout this) -> int = {
+            
+            total : int = 0;
+
+            // First put a boundary around the map to make sure we don't overstep. 
+            for 0..<m_lines.size() do (y) {
+                m_lines[y] = "." + m_lines[y] + ".";
+            }
+            linelen := m_lines[0].size();
+            boundary := std::string(linelen, '.');
+            _ = m_lines.insert(m_lines.begin(), boundary);
+            _ = m_lines.insert(m_lines.end(), boundary);
+
+            for 0..<m_lines.size() do (y) {
+                curr_number : std::optional<int> = std::nullopt;
+                seen_symbol := false;
+                for 0..<m_lines[y].size() do (x) {
+                    if m_part_two {
+                        if m_lines[y][x] == '*' {
+                            neighbors : std::vector<std::optional<int>> = ();
+                            up := find_number(x, y-1);
+                            if up == std::nullopt {
+                                neighbors.push_back(find_number(x-1, y-1));
+                                neighbors.push_back(find_number(x+1, y-1));
+                            }
+                            else {
+                                neighbors.push_back(up);
+                            }
+                            neighbors.push_back(find_number(x-1, y));
+                            neighbors.push_back(find_number(x+1, y));
+                            down := find_number(x, y+1);
+                            if down == std::nullopt {
+                                neighbors.push_back(find_number(x-1, y+1));
+                                neighbors.push_back(find_number(x+1, y+1));
+                            }
+                            else {
+                                neighbors.push_back(down);
+                            }
+                            real_neighbors: std::vector<int> = ();
+                            for neighbors do (neighbor) {
+                                if neighbor != std::nullopt {
+                                    real_neighbors.push_back(neighbor as int);
+                                }
+                            }
+                            if real_neighbors.size() == 2 {
+                                total += real_neighbors[0] * real_neighbors[1];                      
+                            }
+                        }
+                    }
+                    else {
+                        if curr_number == std::nullopt {
+                            // We haven't seen a number yet. Is that changing?
+                            if '0' <= m_lines[y][x] <= '9' {
+                                // Yes it is!
+                                curr_number = m_lines[y][x] - '0';
+                                seen_symbol = m_lines[y-1][x-1].is_symbol() ||
+                                            m_lines[y-1][x].is_symbol() ||
+                                            m_lines[y][x-1].is_symbol() ||
+                                            m_lines[y+1][x-1].is_symbol() ||
+                                            m_lines[y+1][x].is_symbol();
+                            }
+                            else {
+                                // Nothing to do, wasn't in a number, not in one now!
+                            }
+                        }
+                        else {
+                            // We're in a number. Are we still?
+                            seen_symbol |= m_lines[y-1][x].is_symbol() || m_lines[y+1][x].is_symbol();
+                            if '0' <= m_lines[y][x] <= '9' {
+                                // Yes we are!
+                                curr_number = curr_number as int * 10 + m_lines[y][x] - '0';
+                            }
+                            else {
+                                // Oops, we're not!
+                                if m_lines[y][x] != '.' {
+                                    seen_symbol = true;
+                                }
+                                // Different stuff for part two here? Register the result.
+                                if seen_symbol {
+                                    total += curr_number as int;
+                                }
+                                curr_number = std::nullopt;
+                            }
+                        }
+                    }
+                }
+            }
+            return total;
+        }
+    }
+}

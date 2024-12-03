@@ -26,7 +26,7 @@ Day2: namespace = {
             Advent2023::day = (lines, part_two, verbose, argint);
         }
 
-        run : (override this) -> int = {
+        run : (override inout this) -> int = {
             
             color_p := bp::string("red") | bp::string("green") | bp::string("blue");
             dice_p := bp::int_ >> color_p;

@@ -2,6 +2,7 @@ export module Days;
 import Advent2023;
 import Day1;
 import Day2;
+import Day3;
 
 Days: namespace = {
     bad_day: type = {
@@ -9,7 +10,7 @@ Days: namespace = {
         operator= : (out this, lines, part_two, verbose, argint) = {
             Advent2023::day = (lines, part_two, verbose, argint);
         }
-        run : (override this) -> int = {
+        run : (override inout this) -> int = {
             std::cout << "So you've had a bad day...";
             return -1;
         }
@@ -19,6 +20,7 @@ Days: namespace = {
         return inspect day -> std::unique_ptr<Advent2023::day> {
             is 1 = unique.new<Day1::day>(lines, part_two, verbose, argint);
             is 2 = unique.new<Day2::day>(lines, part_two, verbose, argint);
+            is 3 = unique.new<Day3::day>(lines, part_two, verbose, argint);
 
 
             is _ = unique.new<bad_day>(lines, part_two, verbose, argint);

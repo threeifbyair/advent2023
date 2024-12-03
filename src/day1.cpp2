@@ -9,7 +9,7 @@ Day1: namespace = {
             Advent2023::day = (lines, part_two, verbose, argint);
         }
 
-        run : (override this) -> int = {
+        run : (override inout this) -> int = {
             
             total : int = 0;
 
