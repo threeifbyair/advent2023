@@ -14,3 +14,5 @@ or, for part two:
     swift run Advent2023 -i input/<day>.txt -p <day>
 
 Have fun and let me know if you want to exchange ideas!
+
+(Update in 2024: I've used this as an ongoing source of interesting programming experiments, so in addition to the Swift code, and yes, I didn't finish either, you'll find a few days of Rust, a few days of Python, a few days of OCaml when I was applying to work at Jane Street, and now a few days of CPP2.)
